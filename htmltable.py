@@ -25,6 +25,7 @@ import os
 import numpy as np
 import wavio
 from scipy.io.wavfile import read
+from pathlib import Path
 
 
 def remove_silence(y, top_db=25):
@@ -149,12 +150,12 @@ def get_img(fpath, ret_html=True, b64=True):
         plt.imshow(img)
         plt.savefig(s, format='png', bbox_inches="tight")
         plt.close()
-        fpath = base64.b64encode(s.getvalue()).decode("utf-8").replace("\n", "")
+        fpath = "data:image/png;base64," + base64.b64encode(s.getvalue()).decode("utf-8").replace("\n", "")
 
     if not ret_html:
         return fpath
     else:
-        return f'<img align="left" src="data:image/png;base64,{fpath}">'
+        return f'<img align="left" src="{fpath}">'
 
 
 def convert_mediapath(fpath, b64=False):
@@ -174,7 +175,8 @@ if __name__ == '__main__':
     parser.add_argument('data', type=str, nargs='+',
                         help='input table data. Format: columnname1 item1 item2 item3 , columname2 item1 item2 item3 ...')
     parser.add_argument('-b', '--base64', action='store_true')
-    # parser.add_argument('--index', action='store_true')
+    parser.add_argument('-x', '--index', action='store_true', help='add an index column')
+    parser.add_argument('-a', '--infer_columns', action='store_true', help='(A)uto infer columnnames from parent directories')
     # parser.add_argument('--sort', action='store_true')
     # parser.add_argument('-ts', '--trim_silence', action='store_true')
 
@@ -182,15 +184,24 @@ if __name__ == '__main__':
 
     # lol: list of lists, iterates columns wise
     lol_raw = [list(y) for x, y in itertools.groupby(args.data, lambda z: z == ',') if not x]
-    lol = [list(map(partial(convert_mediapath, b64=args.base64), l)) for l in lol_raw]
+    
+    def get_parentname_fpaths(fpaths):
+        parentnames = [Path(fpath).parent.name for fpath in fpaths]
+        assert all(x == parentnames[0] for x in parentnames), f'inconsistent parent dir names: {parentnames}'
+        return parentnames[0]
 
-    #TODO: autoextract column names from filepaths
+    if args.infer_columns:
+        lol = [[get_parentname_fpaths(l)] + l for l in lol_raw]
+    else:
+        lol = lol_raw
+
+    lol = [list(map(partial(convert_mediapath, b64=args.base64), l)) for l in lol]
 
     rowwise = np.array(lol).T
 
-    # if args.index:
-    index = np.array(['index'] + list(range(len(rowwise) - 1)))[..., None]
-    rowwise = np.hstack((index, rowwise))
+    if args.index:
+        index = np.array(['index'] + list(range(len(rowwise) - 1)))[..., None]
+        rowwise = np.hstack((index, rowwise))
 
     for l in lol:
         assert len(l) == len(lol[0]), f'inconsistent number of columns, expected {len(lol[0])}, got {len(l)}'
