@@ -27,6 +27,9 @@ import wavio
 from scipy.io.wavfile import read
 from pathlib import Path
 
+real_print = print
+print = print if sys.stdout.isatty() else lambda *a, **k: None
+
 
 def remove_silence(y, top_db=25):
     from librosa import effects
@@ -167,10 +170,7 @@ def convert_mediapath(fpath, b64=False):
         return fpath
 
 
-if __name__ == '__main__':
-    real_print = print
-    print = print if sys.stdout.isatty() else lambda *a, **k: None
-
+def main():
     parser = argparse.ArgumentParser(__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('data', type=str, nargs='+',
                         help='input table data. Format: columnname1 item1 item2 item3 , columname2 item1 item2 item3 ...')
@@ -210,3 +210,6 @@ if __name__ == '__main__':
 
     html = create_html(rowwise)
     real_print(html)
+
+if __name__ == '__main__':
+    main()
