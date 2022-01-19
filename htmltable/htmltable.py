@@ -162,10 +162,10 @@ def get_img(fpath, ret_html=True, b64=True):
         return f'<img align="left" src="{fpath}">'
 
 def get_video(fpath, ret_html=True, b64=True):
+    mimetype = fpath.split(".")[-1]
     if b64:
-        mimetype = fpath.split(".")[-1]
-        with open(fpath, "rb") as videoFile:
-            fpath = f"data:video/{mimetype};base64," + base64.b64encode(videoFile.read()).decode()
+        with open(fpath, "rb") as f:
+            fpath = f"data:video/{mimetype};base64," + base64.b64encode(f.read()).decode()
 
     if not ret_html:
         return fpath
