@@ -9,8 +9,8 @@ with open("requirements.txt", "r") as fh:
 
 setuptools.setup(
     name="htmltable-cli",
-    version='0.1.1',    
-    description="command line tool to generate html tables with embedded audios and images",
+    version='0.1.2',    
+    description="A command line tool to generate html tables with embedded images, videos and audio",
     long_description=long_description,
     url='https://github.com/FarisHijazi/htmltable-cli',
     author='Faris Hijazi',

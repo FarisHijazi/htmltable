@@ -91,10 +91,6 @@ python htmltable.py col1/*.wav , \
 
 (you don't actually have to organize your arguments in new lines :p)
 
-## TODO
-
-- [ ] add support for videos
-
 ## Known issues
 
 - `ERROR: Cannot uninstall 'llvmlite'. It is a distutils installed project and thus we cannot accurately determine which files belong to it which would lead to only a partial uninstall.`

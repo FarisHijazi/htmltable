@@ -1,6 +1,6 @@
 """
 
-Command line tool to convert lists to html tables with embedded audios and images.
+A command line tool to generate html tables with embedded images, videos and audio
 
 Separate columns with ,
 The easiest way to use it is to put each column in a folder and then pass it using a wildcard *
@@ -21,6 +21,7 @@ import base64
 import io
 import sys
 import os
+import warnings
 
 import numpy as np
 import wavio
@@ -160,12 +161,23 @@ def get_img(fpath, ret_html=True, b64=True):
     else:
         return f'<img align="left" src="{fpath}">'
 
+def get_video(fpath, ret_html=True, b64=True):
+    if b64:
+        warnings.warn('base64 for videos is not yet supported, falling back to direct URL')
+
+    if not ret_html:
+        return fpath
+    else:
+        return f'<video controls><source src="{fpath}" type="video/{fpath.split(".")[-1]}"></video>'
+
 
 def convert_mediapath(fpath, b64=False):
-    if fpath.lower().endswith('.wav'):
+    if fpath.lower().split('.').pop() in ['wav']:
         return get_audio(fpath, ret_html=True, b64=b64)
-    elif fpath.lower().endswith('.png') or fpath.lower().endswith('.jpg') or fpath.lower().endswith('.jpeg'):
+    elif fpath.lower().split('.').pop() in ['png', 'jpg', 'jpeg', 'gif']:
         return get_img(fpath, ret_html=True, b64=b64)
+    elif fpath.lower().split('.').pop() in ['mp4', 'mov', 'mkv']:
+        return get_video(fpath, ret_html=True, b64=b64)
     else:
         return fpath
 
