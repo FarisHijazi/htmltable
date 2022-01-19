@@ -2,7 +2,22 @@
 
 Command line tool to convert lists to html tables with embedded audios and images.
 
-![example output](images/example_output_1.png)
+![example output](https://raw.githubusercontent.com/FarisHijazi/htmltable-cli/master/images/example_output_1.png)
+
+## Installation
+
+### From pypi
+
+```sh
+pip install htmltable-cli
+```
+
+### From source
+
+```sh
+pip install git+https://github.com/FarisHijazi/htmltable-cli
+```
+
 ## Usage
 
     $ python htmltable.py --help
@@ -79,3 +94,18 @@ python htmltable.py col1/*.wav , \
 ## TODO
 
 - [ ] add support for videos
+
+## Known issues
+
+- `ERROR: Cannot uninstall 'llvmlite'. It is a distutils installed project and thus we cannot accurately determine which files belong to it which would lead to only a partial uninstall.`
+
+    run `pip install llvmlite==0.36.0 --ignore-installed`
+
+## Build
+
+```sh
+rm -rf build dist && \
+  python setup.py sdist bdist_wheel && \
+  twine upload dist/*
+```
+
