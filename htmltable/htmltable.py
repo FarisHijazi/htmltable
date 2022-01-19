@@ -163,12 +163,14 @@ def get_img(fpath, ret_html=True, b64=True):
 
 def get_video(fpath, ret_html=True, b64=True):
     if b64:
-        warnings.warn('base64 for videos is not yet supported, falling back to direct URL')
+        mimetype = fpath.split(".")[-1]
+        with open(fpath, "rb") as videoFile:
+            fpath = f"data:video/{mimetype};base64," + base64.b64encode(videoFile.read()).decode()
 
     if not ret_html:
         return fpath
     else:
-        return f'<video controls><source src="{fpath}" type="video/{fpath.split(".")[-1]}"></video>'
+        return f'<video controls><source src="{fpath}" type="video/{mimetype}"></video>'
 
 
 def convert_mediapath(fpath, b64=False):

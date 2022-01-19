@@ -1,0 +1,5 @@
+*.html
+dist/
+build/
+*.egg-info/
+data/

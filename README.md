@@ -67,41 +67,33 @@ Assuming filestructure:
 specifying file paths explicitly
 
 ```sh
-python htmltable.py col1 col1/1.wav col1/2.wav col1/3.wav , \
-                    col2 col2/1.wav col2/2.wav col2/3.wav , \
-                    col3 col3/1.wav col3/2.wav col3/3.wav --base64 --index > output.html
+htmltable col1 col1/1.wav col1/2.wav col1/3.wav , \
+          col2 col2/1.wav col2/2.wav col2/3.wav , \
+          col3 col3/1.wav col3/2.wav col3/3.wav --base64 --index > output.html
 ```
 
 Specifying file paths implicitly using *
 
 ```sh
-python htmltable.py col1 col1/*.wav , \
-                    col2 col2/*.wav , \
-                    col3 col3/*.wav --base64 --index > output.html
+htmltable col1 col1/*.wav , \
+          col2 col2/*.wav , \
+          col3 col3/*.wav --base64 --index > output.html
 ```
 
 (A)uto infer columnnames from parent directories (`-a` or `--infer_columns`).
 
 
 ```sh
-python htmltable.py col1/*.wav , \
-                    col2/*.wav , \
-                    col3/*.wav --infer_columns --base64 --index > output.html
+htmltable col1/*.wav , \
+          col2/*.wav , \
+          col3/*.wav --infer_columns --base64 --index > output.html
 ```
 
 (you don't actually have to organize your arguments in new lines :p)
 
 ## Known issues
 
+- Outputting files is only supported in the `.` dir. i.e `htmltable .... > some/other/path/output.html` has issues when not using `--base64`
 - `ERROR: Cannot uninstall 'llvmlite'. It is a distutils installed project and thus we cannot accurately determine which files belong to it which would lead to only a partial uninstall.`
 
     run `pip install llvmlite==0.36.0 --ignore-installed`
-
-## Build
-
-```sh
-rm -rf build dist && \
-  python setup.py sdist bdist_wheel && \
-  twine upload dist/*
-```
-
