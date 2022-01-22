@@ -4,7 +4,7 @@ import setuptools
 import subprocess
 
 with open("README.md", "r") as fh:
-    long_description = fh.read().replace('](', '][https://raw.githubusercontent.com/FarisHijazi/htmltable-cli/master/')
+    long_description = fh.read().replace('](', '](https://raw.githubusercontent.com/FarisHijazi/htmltable-cli/master/')
 with open("requirements.txt", "r") as fh:
     rqeuirements = fh.readlines()
 
