@@ -2,13 +2,14 @@
 
 A command line tool to generate html tables with embedded images, videos and audio
 
-- Separate columns with `,`
+- Separate columns with `,` or pass all files and group by parent using `--groupy_nthparent 1`
 - The easiest way to use it is to put each column in a folder and then pass it using a wildcard `*`
 
 
 Examples:
 
     htmltable col1/*.* , col2/*.* , col3/*.* --title "my table" --controls controls preload autoplay loop muted --base64 --index > output.html
+    htmltable col*/* --groupy_nthparent 1    --title "my table" --controls controls preload autoplay loop muted --base64 --index > output.html
 
 """
 
@@ -23,9 +24,19 @@ import filetype
 from pathlib import Path
 from tqdm import tqdm
 
+
+__all__ = ['data_to_html']
+
 real_print = print
 print = print if sys.stdout.isatty() else lambda *a, **k: None
 
+
+def get_nth_parentdir(path, n):
+    assert n >= 1
+    path = Path(path)
+    for i in range(n):
+        path = path.parent
+    return path.name
 
 def create_html(rowwise, titlestr='', rowindex=False, colindex=False):
     html = '<html>'
@@ -142,29 +153,15 @@ def hstack(a1, a2):
         a1[i] = [a2[i]] + a1[i]
 
 
-def main():
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument('data', type=str, nargs='+',
-                        help='input table data. Format: col1_item1 col1_item2 col1_item3 , col2_item1 col2_item2 col2_item3 ...')
-    parser.add_argument('--title', default='', help='title heading for the table')
-    parser.add_argument('-c', '--colnames', nargs='+', help='Provide a list of column names (instead of automatically inferring column names from filepaths).')
-    parser.add_argument('-b', '--base64', action='store_true', help='Encode all the media to a base64 URL, meaning that the html file is now portable and doesn\'t depend on the location of the images/audios/videos')
-    index_grp = parser.add_mutually_exclusive_group()
-    index_grp.add_argument('-x', '--index', action='store_true', help='add numerical index column')
-    index_grp.add_argument('-fx', '--filename_index', action='store_true', help='Infer index (rowname) based on row filenames, instead of numerical index. All columns must have identical filenames otherwise an error is raised')
-    parser.add_argument('--controls', nargs='*', choices=["controls", "preload", "autoplay", "loop", "muted"], default=['controls'], help='HTML video and audio controls')
-    parser.add_argument('-t', '--transpose', action='store_true', help='swap columns and rows')
-    parser.add_argument('--clamp', action='store_true', help='clamp number of rows to the shortest row, ensures the table is symmetric.')
-    args = parser.parse_args()
-    transpose = partial(transpose_fn, clamp=args.clamp)
 
-    # colwise: list of lists, iterates columns wise
-    colwise = [list(y) for x, y in itertools.groupby(args.data, lambda z: z == ',') if not x]
-    
+def data_to_html(data, title='', colnames=[], base64=False, index=False, filename_index=False,
+         controls=['controls'], transpose=False, clamp=False, **kwargs):
+    transpose_function = partial(transpose_fn, clamp=clamp)
+    colwise = data
     # append column headers
-    if args.colnames:
-        assert len(args.colnames) == len(colwise), f'--colnames length must match number of columns. Expected: {len(colwise)}, got: {len(args.colnames)} {args.colnames}'
-        colwise = [[c] + l for (c, l) in zip(args.colnames, colwise)]
+    if colnames:
+        assert len(colnames) == len(colwise), f'--colnames length must match number of columns. Expected: {len(colwise)}, got: {len(colnames)} {colnames}'
+        colwise = [[c] + l for (c, l) in zip(colnames, colwise)]
     else:
         colwise = [[get_parentname_fpaths(l)] + l for l in colwise]
 
@@ -174,15 +171,15 @@ def main():
     for i in range(len(colwise)):
         colwise[i] += [''] * (maxlen - len(colwise[i]) )
 
-    if args.clamp:
+    if clamp:
         minlen = min(list(map(lambda l: len(list(filter(lambda x: not not x, l))), colwise)))
         colwise = [l[:minlen] for l in colwise]
 
-    rowwise = transpose(colwise)
+    rowwise = transpose_function(colwise)
 
-    if args.filename_index:
+    if filename_index:
         rowwise = [rowwise[0]] + [sorted(l, key=os.path.basename) for l in rowwise[1:]]
-        rownames_raw = transpose(rowwise[1:])
+        rownames_raw = transpose_function(rowwise[1:])
         ## assert all columns have the same filenames
         cols = [list(map(os.path.basename, l)) for l in (rownames_raw)]
         for col in cols:
@@ -192,25 +189,47 @@ def main():
                 f'\nGot:      {col}.'
                 )
 
-    rowwise = [list(map(partial(convert_mediapath, b64=args.base64, controls=args.controls), l))
+    rowwise = [list(map(partial(convert_mediapath, b64=base64, controls=controls), l))
                for l in tqdm(rowwise, 'encoding media', file=sys.stderr)]
 
-    if args.filename_index:
+    if filename_index:
         hstack(rowwise, ['#'] + cols[0])
-    elif args.index:
+    elif index:
         hstack(rowwise,  ['#'] + list(range(1, len(rowwise), 1)))
 
-    if args.transpose:
-        rowwise = transpose(rowwise)
-    
-    print('not (not args.index and args.transpose)', args.index, args.transpose, not (not args.index and args.transpose))
+    if transpose:
+        rowwise = transpose_function(rowwise)
 
-    html = create_html(rowwise, args.title,
-                       rowindex=args.index or args.transpose,
-                       colindex=not (not args.index and args.transpose),
+    html = create_html(rowwise, title,
+                       rowindex=index or transpose,
+                       colindex=not (not index and transpose),
                        )
     real_print(html)
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument('data', type=str, nargs='+',
+                        help='input table data. Format: col1_item1 col1_item2 col1_item3 , col2_item1 col2_item2 col2_item3 ...')
+    parser.add_argument('--title', default='', help='title heading for the table')
+    parser.add_argument('-g', '--groupy_nthparent', type=int, default=0, help='choose columns based on the nth parent, instead of separating using "," delimiter to determine columns.'
+                        'This allows to dynamically specify folders instead of passing folders explicitly with "," in between. Set to -g 1 for the direct parent of the files')
+    parser.add_argument('-c', '--colnames', nargs='+', help='Provide a list of column names (instead of automatically inferring column names from filepaths).')
+    parser.add_argument('-b', '--base64', action='store_true', help='Encode all the media to a base64 URL, meaning that the html file is now portable and doesn\'t depend on the location of the images/audios/videos')
+    index_grp = parser.add_mutually_exclusive_group()
+    index_grp.add_argument('-x', '--index', action='store_true', help='add numerical index column')
+    index_grp.add_argument('-fx', '--filename_index', action='store_true', help='Infer index (rowname) based on row filenames, instead of numerical index. All columns must have identical filenames otherwise an error is raised')
+    parser.add_argument('--controls', nargs='*', choices=["controls", "preload", "autoplay", "loop", "muted"], default=['controls'], help='HTML video and audio controls')
+    parser.add_argument('-t', '--transpose', action='store_true', help='swap columns and rows')
+    parser.add_argument('--clamp', action='store_true', help='clamp number of rows to the shortest row, ensures the table is symmetric.')
+    args = parser.parse_args()
+    
+    # colwise: list of lists, iterates columns wise
+    if args.groupy_nthparent:
+        args.data = [list(y) for x, y in itertools.groupby(args.data, lambda z: get_nth_parentdir(z, 1)) ]
+    else:
+        args.data = [list(y) for x, y in itertools.groupby(args.data, lambda z: z == ',') if not x]
+        
+    
+    data_to_html(**vars(args))
+

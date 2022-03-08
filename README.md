@@ -25,14 +25,17 @@ pip install htmltable-cli
 
     A command line tool to generate html tables with embedded images, videos and audio
 
-    - Separate columns with `,`
+    - Separate columns with `,` or pass all files and group by parent using `--groupy_nthparent 1`
     - The easiest way to use it is to put each column in a folder and then pass it using a wildcard `*`
 
     Examples:
 
         htmltable col1/*.* , col2/*.* , col3/*.* --title "my table" --controls controls preload autoplay loop muted --base64 --index > output.html
+        htmltable col*/* --groupy_nthparent 1    --title "my table" --controls controls preload autoplay loop muted --base64 --index > output.html
 
-        [-h] [--title TITLE] [-c COLNAMES [COLNAMES ...]] [-b] [-x | -fx] [--controls [{controls,preload,autoplay,loop,muted} [{controls,preload,autoplay,loop,muted} ...]]] [-t] [--clamp] data [data ...]
+        [-h] [--title TITLE] [-g GROUPY_NTHPARENT] [-c COLNAMES [COLNAMES ...]] [-b] [-x | -fx]
+        [--controls [{controls,preload,autoplay,loop,muted} [{controls,preload,autoplay,loop,muted} ...]]] [-t] [--clamp]
+        data [data ...]
 
     positional arguments:
     data                  input table data. Format: col1_item1 col1_item2 col1_item3 , col2_item1 col2_item2 col2_item3 ...
@@ -40,12 +43,18 @@ pip install htmltable-cli
     optional arguments:
     -h, --help            show this help message and exit
     --title TITLE         title heading for the table
+    -g GROUPY_NTHPARENT, --groupy_nthparent GROUPY_NTHPARENT
+                            choose columns based on the nth parent, instead of separating using "," delimiter to determine
+                            columns.This allows to dynamically specify folders instead of passing folders explicitly with "," in
+                            between. Set to -g 1 for the direct parent of the files
     -c COLNAMES [COLNAMES ...], --colnames COLNAMES [COLNAMES ...]
                             Provide a list of column names (instead of automatically inferring column names from filepaths).
-    -b, --base64          Encode all the media to a base64 URL, meaning that the html file is now portable and doesn't depend on the location of the images/audios/videos
+    -b, --base64          Encode all the media to a base64 URL, meaning that the html file is now portable and doesn't depend
+                            on the location of the images/audios/videos
     -x, --index           add numerical index column
     -fx, --filename_index
-                            Infer index (rowname) based on row filenames, instead of numerical index. All columns must have identical filenames otherwise an error is raised
+                            Infer index (rowname) based on row filenames, instead of numerical index. All columns must have
+                            identical filenames otherwise an error is raised
     --controls [{controls,preload,autoplay,loop,muted} [{controls,preload,autoplay,loop,muted} ...]]
                             HTML video and audio controls
     -t, --transpose       swap columns and rows
@@ -80,7 +89,13 @@ Assuming filestructure:
 htmltable col1/audio1.wav , col2/audio1.wav , col3/audio1.wav > output.html
 ```
 
-(you don't actually have to organize your arguments in a new lines :p)
+or for dynamically choosing folders using wildcards `*`.
+This will pass all files, and then will group them by parent folder, in this case `1` means the first parent folder.
+
+```sh
+htmltable col*/* --groupy_nthparent 1 > output.html
+```
+
 
 ![](images/minimal.png)
 
@@ -93,6 +108,9 @@ htmltable col1/*.* , \
           --controls controls preload autoplay loop muted \
           --base64 --index > output.html
 ```
+
+(you don't actually have to organize your arguments in a new lines :p)
+
 ![](images/longexample.gif)
 
 ##### Explaination
