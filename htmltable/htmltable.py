@@ -207,7 +207,7 @@ def data_to_html(data, title='', colnames=[], base64=False, index=False, filenam
     real_print(html)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('data', type=str, nargs='+',
                         help='input table data. Format: col1_item1 col1_item2 col1_item3 , col2_item1 col2_item2 col2_item3 ...')
@@ -233,3 +233,6 @@ if __name__ == '__main__':
     
     data_to_html(**vars(args))
 
+
+if __name__ == '__main__':
+    main()
