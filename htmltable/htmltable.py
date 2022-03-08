@@ -131,8 +131,8 @@ def convert_mediapath(fpath, controls=[], b64=False):
     else:
         return fpath
 
-def get_parentname_fpaths(fpaths):
-    parentnames = [Path(fpath).parent.name for fpath in fpaths]
+def get_parentname_fpaths(fpaths, groupy_nthparent=1):
+    parentnames = [get_nth_parentdir(fpath, groupy_nthparent) for fpath in fpaths]
     assert all(x == parentnames[0] for x in parentnames), (
         f'Inconsistent parent folder names: {parentnames}, unable to infer column names.'
         'For nonhomogeneous file paths (different parent folders), please specify the column names manually using -c/--colnames')
@@ -155,15 +155,17 @@ def hstack(a1, a2):
 
 
 def data_to_html(data, title='', colnames=[], base64=False, index=False, filename_index=False,
-         controls=['controls'], transpose=False, clamp=False, **kwargs):
+         controls=['controls'], transpose=False, clamp=False, groupy_nthparent=None, **kwargs):
     transpose_function = partial(transpose_fn, clamp=clamp)
     colwise = data
+    if groupy_nthparent is None:
+        groupy_nthparent = 1
     # append column headers
     if colnames:
         assert len(colnames) == len(colwise), f'--colnames length must match number of columns. Expected: {len(colwise)}, got: {len(colnames)} {colnames}'
         colwise = [[c] + l for (c, l) in zip(colnames, colwise)]
     else:
-        colwise = [[get_parentname_fpaths(l)] + l for l in colwise]
+        colwise = [[get_parentname_fpaths(l, groupy_nthparent=groupy_nthparent)] + l for l in colwise]
 
 
     # padding
@@ -212,7 +214,7 @@ def main():
     parser.add_argument('data', type=str, nargs='+',
                         help='input table data. Format: col1_item1 col1_item2 col1_item3 , col2_item1 col2_item2 col2_item3 ...')
     parser.add_argument('--title', default='', help='title heading for the table')
-    parser.add_argument('-g', '--groupy_nthparent', type=int, default=0, help='choose columns based on the nth parent, instead of separating using "," delimiter to determine columns.'
+    parser.add_argument('-g', '--groupy_nthparent', type=int, default=None, help='choose columns based on the nth parent, instead of separating using "," delimiter to determine columns.'
                         'This allows to dynamically specify folders instead of passing folders explicitly with "," in between. Set to -g 1 for the direct parent of the files')
     parser.add_argument('-c', '--colnames', nargs='+', help='Provide a list of column names (instead of automatically inferring column names from filepaths).')
     parser.add_argument('-b', '--base64', action='store_true', help='Encode all the media to a base64 URL, meaning that the html file is now portable and doesn\'t depend on the location of the images/audios/videos')
@@ -225,8 +227,8 @@ def main():
     args = parser.parse_args()
     
     # colwise: list of lists, iterates columns wise
-    if args.groupy_nthparent:
-        args.data = [list(y) for x, y in itertools.groupby(args.data, lambda z: get_nth_parentdir(z, 1)) ]
+    if args.groupy_nthparent is not None:
+        args.data = [list(y) for x, y in itertools.groupby(args.data, lambda z: get_nth_parentdir(z, args.groupy_nthparent)) ]
     else:
         args.data = [list(y) for x, y in itertools.groupby(args.data, lambda z: z == ',') if not x]
         
