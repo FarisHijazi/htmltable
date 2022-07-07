@@ -1,3 +1,5 @@
+#!/bin/bash
+
 sh test.sh && \
   sh gittag-increment.sh && \
   git push && \
