@@ -21,7 +21,7 @@ pip install htmltable-cli
 
 ## Usage
 
-    usage: 
+    usage:
 
     A command line tool to generate html tables with embedded images, videos and audio
 
@@ -126,7 +126,7 @@ htmltable col1/*.* , \
 - Row headers options:
   - Can be left blank
   - Indexed numerically using `-x`/`--index`
-  - Use the filenames, if all files have the same name across columns, using `-fx`/`--filename_index`.  
+  - Use the filenames, if all files have the same name across columns, using `-fx`/`--filename_index`.
 
     Example: *col1/audio1.wav*, *col2/audio2.wav*.
 
