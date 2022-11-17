@@ -308,7 +308,7 @@ def main():
     args = parser.parse_args()
 
     # compute glob
-    args.data = list(map(glob.glob, tqdm(args.data, "globbing", file=sys.stderr)))
+    args.data = [(glob.glob(x) if "*" in x else [x]) for x in tqdm(args.data, "globbing", file=sys.stderr)]
     args.data = list(itertools.chain(*args.data))  # flatten
 
     # colwise: list of lists, iterates columns wise
