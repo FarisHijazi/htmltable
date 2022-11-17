@@ -9,7 +9,10 @@ A command line tool to generate html tables with embedded images, videos and aud
 Examples:
 
     htmltable col1/*.* , col2/*.* , col3/*.* --title "my table" --controls controls preload autoplay loop muted --base64 --index > output.html
-    htmltable col*/* --groupy_nthparent 1    --title "my table" --controls controls preload autoplay loop muted --base64 --index > output.html
+    htmltable col*/* --groupy_nthparent 1 ...
+    htmltable 'col*/*' --groupy_nthparent 1 ...
+
+    # notice here the single quotes around the wildcard, this will solve the "argument list too long" error by preventing the shell from expanding the wildcard
 
 """
 
@@ -20,8 +23,8 @@ import base64
 import sys
 import os
 import filetype
+import glob
 from urllib.parse import quote
-
 from pathlib import Path
 from tqdm import tqdm
 
@@ -229,6 +232,10 @@ def main():
     parser.add_argument('--clamp', action='store_true', help='clamp number of rows to the shortest row, ensures the table is symmetric.')
     args = parser.parse_args()
     
+    # compute glob
+    args.data = list(map(glob.glob, tqdm(args.data, 'globbing', file=sys.stderr)))
+    args.data = list(itertools.chain(*args.data)) # flatten
+
     # colwise: list of lists, iterates columns wise
     if args.groupy_nthparent is not None:
         args.data = [list(y) for x, y in itertools.groupby(args.data, lambda z: get_nth_parentdir(z, args.groupy_nthparent)) ]
