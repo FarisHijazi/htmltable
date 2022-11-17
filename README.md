@@ -1,6 +1,6 @@
 # htmltable cli
 
-Command line tool to convert lists to portable html tables with embedded audios and images.
+Command line tool to convert lists to portable HTML tables with embedded audios and images.
 
 ![](images/longexample.gif)
 
@@ -13,7 +13,7 @@ Command line tool to convert lists to portable html tables with embedded audios 
 pip install git+https://github.com/FarisHijazi/htmltable-cli
 ```
 
-### From pypi (table)
+### From PyPi (table)
 
 ```sh
 pip install htmltable-cli
@@ -113,7 +113,7 @@ htmltable col1/*.* , \
 
 ![](images/longexample.gif)
 
-##### Explaination
+##### Explanation
 
 - `--base64` will encode all the media to a base64 URL, meaning that the html file is now portable and doesn't depend on the location of the images/audios/videos
 - `col1/*.*` passes all files in `col1/` directory
@@ -122,7 +122,7 @@ htmltable col1/*.* , \
 
 #### Column and row headers
 
-- Column headers are infered automatically, to manually specify columnames, use `-c`/`--colnames`
+- Column headers are inferred automatically, to manually specify column names, use `-c`/`--colnames`
 - Row headers options:
   - Can be left blank
   - Indexed numerically using `-x`/`--index`
@@ -134,3 +134,18 @@ htmltable col1/*.* , \
 
 - Outputting files is only supported in the `.` dir. i.e `htmltable .... > some/other/path/output.html` has issues when not using `--base64`
 - setting `--controls autoplay` won't work, you need to add `muted` as well
+
+## Development
+
+Before committing, run the test script and make sure the output *.html* files are as expected
+
+```sh
+sh test.sh; ls testoutput*.html | xargs -I{} xdg-open {}  # for linux debian
+sh test.sh; ls testoutput*.html | xargs -I{} start {}     # for windows
+```
+
+For building a release and uploading it to PyPi, make and `git commit` your changes, then run
+
+```sh
+sh build.sh
+```
