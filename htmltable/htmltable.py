@@ -20,6 +20,7 @@ import base64
 import sys
 import os
 import filetype
+from urllib.parse import quote
 
 from pathlib import Path
 from tqdm import tqdm
@@ -88,28 +89,30 @@ def create_html(rowwise, titlestr='', rowindex=False, colindex=False):
     return html
 
 def get_img(fpath, mimetype, ret_html=True, b64=True, **kwargs):
+    fpath_actual = fpath
     if b64:
         with open(fpath, "rb") as f:
             fpath = f"data:{mimetype};base64," + base64.b64encode(f.read()).decode()
 
     if not ret_html:
-        return fpath
+        return f'<a href="{quote(fpath_actual)}">'
     else:
-        return f'<img src="{fpath}">'
+        return f'<a href="{quote(fpath_actual)}"><img src="{fpath}"></a>'
 
 def get_audio(fpath, mimetype, ret_html=True, b64=True, controls=[], **kwargs):
     return get_video(fpath, mimetype, ret_html=ret_html, b64=b64, controls=controls, **kwargs)
 
 def get_video(fpath, mimetype, ret_html=True, b64=True, controls=[], **kwargs):
+    fpath_actual = fpath
     if b64:
         with open(fpath, "rb") as f:
             fpath = f"data:{mimetype};base64," + base64.b64encode(f.read()).decode()
 
     mtype = mimetype.split("/")[0]
     if not ret_html:
-        return fpath
+        return f'<a href="{quote(fpath_actual)}">'
     else:
-        return f'<{mtype} {" ".join(controls)}><source src="{fpath}" type="{mimetype}"></{mtype}>'
+        return f'<a href="{quote(fpath_actual)}"><{mtype} {" ".join(controls)}><source src="{fpath}" type="{mimetype}"></{mtype}></a>'
 
 def convert_mediapath(fpath, controls=[], b64=False):
     if fpath is None:
