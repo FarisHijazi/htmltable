@@ -18,7 +18,6 @@ Examples:
 
 import itertools
 import argparse
-from functools import partial
 import base64
 import sys
 import os
@@ -26,13 +25,15 @@ import filetype
 import glob
 from urllib.parse import quote
 from pathlib import Path
+import mimetypes
+from functools import partial
 from tqdm import tqdm
 
 
 __all__ = ['data_to_html']
 
 real_print = print
-print = print if sys.stdout.isatty() else lambda *a, **k: None
+print = print if sys.stdout.isatty() else lambda *a, **k: sys.stderr.write(' '.join(map(str, a)) + '\n', **k)
 
 
 def get_nth_parentdir(path, n):
@@ -117,12 +118,17 @@ def get_video(fpath, mimetype, ret_html=True, b64=True, controls=[], **kwargs):
     else:
         return f'<a href="{quote(fpath_actual)}"><{mtype} {" ".join(controls)}><source src="{fpath}" type="{mimetype}"></{mtype}></a>'
 
-def convert_mediapath(fpath, controls=[], b64=False):
+def convert_mediapath(fpath, controls=[], b64=False, filetype_method='magic', ret_html=True, **kwargs):
     if fpath is None:
         return ""
 
     try:
-        mimetype = str(filetype.guess(str(fpath)).mime)
+        if filetype_method == 'magic':
+            mimetype = str(filetype.guess(str(fpath)).mime)
+        elif filetype_method == 'extension':
+            mimetype = mimetypes.guess_type(str(fpath))[0]
+        else:
+            raise ValueError(f'Unknown filetype_method: {filetype_method}')
     except:
         mimetype = None
     if mimetype is None:
@@ -161,7 +167,7 @@ def hstack(a1, a2):
 
 
 def data_to_html(data, title='', colnames=[], base64=False, index=False, filename_index=False,
-         controls=['controls'], transpose=False, clamp=False, groupy_nthparent=None, **kwargs):
+         controls=['controls'], transpose=False, clamp=False, groupy_nthparent=None, filetype_method='extension', **kwargs):
     transpose_function = partial(transpose_fn, clamp=clamp)
     colwise = data
     if groupy_nthparent is None:
@@ -197,7 +203,7 @@ def data_to_html(data, title='', colnames=[], base64=False, index=False, filenam
                 f'\nGot:      {col}.'
                 )
 
-    rowwise = [list(map(partial(convert_mediapath, b64=base64, controls=controls), l))
+    rowwise = [list(map(partial(convert_mediapath, b64=base64, controls=controls, filetype_method=filetype_method), l))
                for l in tqdm(rowwise, 'encoding media', file=sys.stderr)]
 
     if filename_index:
@@ -230,6 +236,7 @@ def main():
     parser.add_argument('--controls', nargs='*', choices=["controls", "preload", "autoplay", "loop", "muted"], default=['controls'], help='HTML video and audio controls')
     parser.add_argument('-t', '--transpose', action='store_true', help='swap columns and rows')
     parser.add_argument('--clamp', action='store_true', help='clamp number of rows to the shortest row, ensures the table is symmetric.')
+    parser.add_argument('-ft', '--filetype', default='extension', choices=['extension', 'magic'], help='Infer filetype from file extension (fast) or from file magic header (slow but accurate).')
     args = parser.parse_args()
     
     # compute glob
